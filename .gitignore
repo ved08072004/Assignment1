@@ -1,0 +1,3 @@
+# Environment variables
+vector_db_project/.env
+fastapi_mongo/.env
