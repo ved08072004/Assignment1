@@ -19,7 +19,7 @@ class VectorDatabase:
             )
         
         self.index = self.pc.Index(Config.INDEX_NAME)
-        print(f"✓ Connected to Pinecone index: {Config.INDEX_NAME}")
+        print(f"[OK] Connected to Pinecone index: {Config.INDEX_NAME}")
     
     def store_query(self, query_id: str, query_text: str, vector: list):
         """Store query vector in Pinecone"""
@@ -34,7 +34,7 @@ class VectorDatabase:
                 }
             ]
         )
-        print(f"✓ Stored vector with ID: {query_id}")
+        print(f"[OK] Stored vector with ID: {query_id}")
     
     def search_similar(self, vector: list, top_k: int = 5):
         """Search for similar vectors"""

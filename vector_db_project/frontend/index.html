@@ -275,6 +275,27 @@
                     <span id="addBtnLoader" class="loading" style="display: none;"></span>
                 </button>
             </div>
+
+            <div style="text-align: center; margin: 20px 0; color: #999; font-size: 0.9rem;">
+                <span>OR</span>
+            </div>
+
+            <div class="input-group">
+                <input type="file" id="pdfInput" accept=".pdf" style="display: none;"
+                    onchange="handleFileSelect(event)">
+                <input type="text" id="pdfFileName" placeholder="No file selected" readonly
+                    style="flex: 1; cursor: pointer; background: #f8f9fa;"
+                    onclick="document.getElementById('pdfInput').click()">
+                <button class="btn btn-secondary" onclick="document.getElementById('pdfInput').click()"
+                    style="min-width: 120px;">
+                    Choose PDF
+                </button>
+                <button class="btn btn-primary" onclick="uploadPDF()" id="uploadBtn" disabled>
+                    <span id="uploadBtnText">Upload PDF</span>
+                    <span id="uploadBtnLoader" class="loading" style="display: none;"></span>
+                </button>
+            </div>
+
             <div class="input-group">
                 <input type="text" id="searchInput" placeholder="Search for similar queries..."
                     onkeypress="handleSearchKeyPress(event)">
@@ -437,6 +458,99 @@
                     <div class="result-meta">ID: ${result.id}</div>
                 </div>
             `).join('');
+        }
+
+        let selectedFile = null;
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            const fileNameInput = document.getElementById('pdfFileName');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            if (file) {
+                // Validate file type
+                if (!file.name.endsWith('.pdf')) {
+                    showStatus('Please select a PDF file', 'error');
+                    event.target.value = '';
+                    fileNameInput.value = 'No file selected';
+                    uploadBtn.disabled = true;
+                    selectedFile = null;
+                    return;
+                }
+
+                // Validate file size (10MB)
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    showStatus('File size exceeds 10MB limit', 'error');
+                    event.target.value = '';
+                    fileNameInput.value = 'No file selected';
+                    uploadBtn.disabled = true;
+                    selectedFile = null;
+                    return;
+                }
+
+                selectedFile = file;
+                fileNameInput.value = file.name;
+                uploadBtn.disabled = false;
+                showStatus(`Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`, 'info');
+            } else {
+                fileNameInput.value = 'No file selected';
+                uploadBtn.disabled = true;
+                selectedFile = null;
+            }
+        }
+
+        async function uploadPDF() {
+            if (!selectedFile) {
+                showStatus('Please select a PDF file first', 'error');
+                return;
+            }
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadBtnText = document.getElementById('uploadBtnText');
+            const uploadBtnLoader = document.getElementById('uploadBtnLoader');
+
+            uploadBtn.disabled = true;
+            uploadBtnText.style.display = 'none';
+            uploadBtnLoader.style.display = 'inline-block';
+            showStatus('Processing PDF...', 'info');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch(`${API_BASE}/upload-pdf`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const stats = data.stats;
+                    showStatus(
+                        `✓ PDF processed! ${stats.chunks_stored} chunks from ${stats.total_pages} pages stored successfully`,
+                        'success'
+                    );
+
+                    // Reset file input
+                    document.getElementById('pdfInput').value = '';
+                    document.getElementById('pdfFileName').value = 'No file selected';
+                    selectedFile = null;
+
+                    // Update query count
+                    queryCount += stats.chunks_stored;
+                    document.getElementById('totalQueries').textContent = queryCount;
+                } else {
+                    showStatus(`Error: ${data.detail || 'Failed to upload PDF'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtnText.style.display = 'inline';
+                uploadBtnLoader.style.display = 'none';
+            }
         }
 
         // Initialize
