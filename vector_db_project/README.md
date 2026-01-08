@@ -69,3 +69,11 @@ vector_db_project/
 ## 🧠 Model
 
 Uses **BAAI/bge-large-en-v1.5** (1024 dimensions) for high-quality embeddings.
+
+## 📸 Screenshots
+
+### Vector Search Interface
+![Vector Search Interface](screenshots/screenshot1.png)
+
+### Search Results
+![Search Results](screenshots/screenshot2.png)
